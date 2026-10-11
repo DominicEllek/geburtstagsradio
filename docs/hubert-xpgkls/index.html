@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Radio Hubert</title>
+<meta name="description" content="Die Nachrichten vom 14. Oktober 1978, nur für Hubert.">
+<meta property="og:title" content="Radio Hubert">
+<meta property="og:description" content="Die Nachrichten vom 14. Oktober 1978, nur für Hubert.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#cdd0ca">
+<style>
+  :root {
+    --aluminium: #cdd0ca;
+    --graphit: #26282a;
+    --skalenglas: #17231d;
+    --lampenlicht: #f2d58e;
+    --nadelrot: #c73220;
+    --graphit-leise: rgba(38, 40, 42, 0.62);
+    --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--aluminium);
+    color: var(--graphit);
+    font-family: var(--font);
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .geraet {
+    width: 100%;
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 1.25rem 1.25rem 3rem;
+  }
+
+  .sender {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  /* ---------- Skalenfenster ---------- */
+  .skala {
+    position: relative;
+    background: var(--skalenglas);
+    border-radius: 4px;
+    overflow: hidden;
+    aspect-ratio: 600 / 170;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 10px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .skala::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 120% at var(--nadel-x, 50%) 100%, rgba(242, 213, 142, 0.55), rgba(242, 213, 142, 0) 70%);
+    opacity: 0.35;
+    transition: opacity 0.9s ease;
+    pointer-events: none;
+  }
+
+  .skala.spielt::before { opacity: 1; }
+
+  .skala svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .skala .strich { stroke: var(--lampenlicht); stroke-linecap: butt; }
+  .skala .zahl {
+    fill: var(--lampenlicht);
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 500;
+    text-anchor: middle;
+  }
+
+  .nadel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--nadel-x, 50%);
+    width: 2px;
+    margin-left: -1px;
+    background: var(--nadelrot);
+    box-shadow: 0 0 10px rgba(199, 50, 32, 0.7);
+  }
+
+  .nadel.faehrt { transition: left 2.6s cubic-bezier(0.22, 0.9, 0.3, 1.04); }
+
+  .nadel-datum {
+    position: absolute;
+    bottom: 0.7rem;
+    left: var(--nadel-x, 50%);
+    transform: translateX(8px);
+    color: var(--lampenlicht);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .nadel-datum.links { transform: translateX(calc(-100% - 8px)); }
+
+  /* ---------- Titel ---------- */
+  h1 {
+    margin: 1.75rem 0 0.75rem;
+    font-size: clamp(2.35rem, 11.5vw, 3.6rem);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+
+  h1 .tag {
+    display: block;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+  }
+
+  .untertitel {
+    margin: 0 0 2rem;
+    max-width: 30rem;
+    color: var(--graphit-leise);
+  }
+
+  /* ---------- Player ---------- */
+  .player {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 1.1rem;
+    row-gap: 0.65rem;
+    align-items: center;
+  }
+
+  .abspielen {
+    grid-row: span 2;
+    width: 4.75rem;
+    height: 4.75rem;
+    border-radius: 50%;
+    border: 0;
+    background: var(--nadelrot);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s ease;
+  }
+
+  .abspielen:active { transform: scale(0.95); }
+  .abspielen svg { width: 1.7rem; height: 1.7rem; fill: currentColor; }
+  .abspielen .pause { display: none; }
+  .abspielen[aria-pressed="true"] .play { display: none; }
+  .abspielen[aria-pressed="true"] .pause { display: block; }
+
+  .abspielen:focus-visible,
+  .position:focus-visible,
+  summary:focus-visible {
+    outline: 3px solid var(--graphit);
+    outline-offset: 3px;
+  }
+
+  .zeit {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    align-self: end;
+  }
+
+  .zeit .gesamt { font-weight: 400; color: var(--graphit-leise); }
+
+  .position {
+    --fortschritt: 0%;
+    width: 100%;
+    height: 1.5rem;
+    margin: 0;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    align-self: start;
+    cursor: pointer;
+  }
+
+  .position::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--graphit) var(--fortschritt), rgba(38, 40, 42, 0.25) var(--fortschritt));
+  }
+  .position::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(38, 40, 42, 0.25);
+  }
+  .position::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--graphit); }
+  .position::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: -0.4rem;
+    border-radius: 50%;
+    border: 0;
+    background: var(--graphit);
+  }
+  .position::-moz-range-thumb {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 0;
+    background: var(--graphit);
+  }
+
+  /* ---------- Sprechtext ---------- */
+  details { margin-top: 2.25rem; border-top: 1px solid rgba(38, 40, 42, 0.28); padding-top: 1rem; }
+  summary { cursor: pointer; font-weight: 600; width: fit-content; }
+  .sprechtext { margin-top: 1rem; max-width: 36rem; }
+  .sprechtext p { margin: 0 0 1rem; }
+
+  .fuss {
+    margin: 2.25rem 0 0;
+    font-size: 0.9375rem;
+    color: var(--graphit-leise);
+    max-width: 32rem;
+  }
+
+  .fuss strong { color: var(--graphit); font-weight: 600; }
+
+  .nur-ohne-js { margin-top: 1rem; }
+  .nur-ohne-js audio { width: 100%; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nadel.faehrt { transition: none; }
+    .skala::before { transition: none; }
+    .abspielen { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main class="geraet">
+  <p class="sender">Radio Hubert</p>
+
+  <div class="skala" id="skala" data-jahr="1978" data-anteil="0.7836" data-datum-kurz="14.10.1978">
+    <svg id="skala-svg" viewBox="0 0 600 170" preserveAspectRatio="none" aria-hidden="true" focusable="false"></svg>
+    <div class="nadel" id="nadel"></div>
+    <div class="nadel-datum" id="nadel-datum">14.10.1978</div>
+  </div>
+
+  <h1><span class="tag">Samstag,</span>14. Oktober 1978</h1>
+  <p class="untertitel">Die Nachrichten von dem Tag, an dem du geboren wurdest.</p>
+
+  <div class="player" id="player" hidden>
+    <button class="abspielen" id="abspielen" type="button" aria-pressed="false" aria-label="Abspielen">
+      <svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z"/></svg>
+      <svg class="pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1"/><rect x="13.8" y="5" width="4.2" height="14" rx="1"/></svg>
+    </button>
+    <div class="zeit" aria-live="off"><span id="jetzt">0:00</span> <span class="gesamt">von <span id="gesamt">&ndash;:&ndash;&ndash;</span></span></div>
+    <input class="position" id="position" type="range" min="0" max="1000" value="0" step="1" aria-label="Position im Beitrag">
+  </div>
+
+  <div class="nur-ohne-js" id="ohne-js">
+    <audio id="audio" controls preload="metadata" src="radio.mp3"></audio>
+  </div>
+
+  <details>
+    <summary>Sprechtext lesen</summary>
+    <div class="sprechtext">
+      <p>Radio Hubert. Die Nachrichten zu deinem Tag.</p>
+      <p>Guten Tag, lieber Hubert! Wir schreiben Samstag, den vierzehnten Oktober neunzehnhundertachtundsiebzig, und heute ist ein besonderer Tag für die Weltgeschichte: Du wirst geboren. Hier sind die Meldungen.</p>
+      <p>Zuerst der Sport, denn bei dir wissen wir ja, was zählt. Bundesliga, neunter Spieltag, Anstoß halb vier. Im Hamburger Volksparkstadion gibt es vor fünfundzwanzigtausend Zuschauern ein Schützenfest: Der HSV schlägt den 1. FC Nürnberg vier zu eins. Die Tore erzielen Horst Hrubesch, Manfred Kaltz per Elfmeter, Willi Reimann und Jimmy Hartwig. Nur acht Tage nach der Niederlage in Kaiserslautern ist das die richtige Antwort.</p>
+      <p>Auf der Bielefelder Alm trennen sich Arminia Bielefeld und der VfB Stuttgart eins zu eins. Volker Graul bringt die Gastgeber in der siebten Minute in Führung, Hansi Müller gleicht in der fünfundzwanzigsten aus. Achtundzwanzigtausend Zuschauer sind dabei.</p>
+      <p>Und jetzt ein Blick in die Zukunft, den es im Radio sonst nicht gibt: Der HSV wird am Ende dieser Saison zum ersten Mal Meister der Bundesliga, mit neunundvierzig Punkten, nur einen Punkt vor Stuttgart. Kevin Keegan hat in der Liga noch kein einziges Tor geschossen. Er wird siebzehn erzielen.</p>
+      <p>Im Sommer war ja schon einiges passiert. Bei der Weltmeisterschaft in Argentinien verlor Deutschland in der Zwischenrunde zwei zu drei gegen Österreich, die Schmach von Córdoba. Helmut Schön hörte auf, sein Assistent Jupp Derwall übernahm. Der wird mit der Mannschaft später dreiundzwanzig Spiele in Serie ungeschlagen bleiben.</p>
+      <p>Nun zur Musik. In den deutschen Charts steht diese Woche Boney M. mit „Rasputin“ an der Spitze, und auch die Album-Hitparade führt Boney M. an, mit „Nightflight to Venus“.</p>
+      <p>Und was kostet die Welt? Ein Liter Super Benzin kostet im Durchschnitt dieses Jahres rund vierundneunzig Pfennig. Bundeskanzler ist Helmut Schmidt.</p>
+      <p>Die Weltnachrichten in Kürze: In Kenia wird Daniel arap Moi als zweiter Präsident des Landes vereidigt. In den USA unterschreibt Präsident Jimmy Carter ein Gesetz, das das Bierbrauen für den Eigenbedarf von der Steuer befreit. Hobbybrauer dürfen aufatmen. Und zwei Tage nach deiner Geburt, am sechzehnten Oktober, wählt das Konklave in Rom Karol Wojtyła zum neuen Papst: Johannes Paul der Zweite.</p>
+      <p>Das Wetter: Dazu liegen uns leider keine gesicherten Angaben vor. Aber für Fußballfans gilt ohnehin: Es ist immer Spielwetter.</p>
+      <p>Das waren die Nachrichten aus dem Jahr deiner Geburt. Lieber Hubert, alles Gute zum Geburtstag! Du bist Jahrgang neunzehnhundertachtundsiebzig, und das ist, wie wir jetzt wissen, ein Meisterjahrgang. Radio Hubert verabschiedet sich. Ein Geschenk von Dominic.</p>
+    </div>
+  </details>
+
+  <p class="fuss"><strong>Ein Geschenk von Dominic.</strong> Die Stimme ist KI-generiert, die Fakten stammen aus öffentlichen Quellen.</p>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var skala = document.getElementById("skala");
+  var svg = document.getElementById("skala-svg");
+  var nadel = document.getElementById("nadel");
+  var nadelDatum = document.getElementById("nadel-datum");
+  var audio = document.getElementById("audio");
+  var player = document.getElementById("player");
+  var knopf = document.getElementById("abspielen");
+  var pos = document.getElementById("position");
+  var jetzt = document.getElementById("jetzt");
+  var gesamt = document.getElementById("gesamt");
+  var ohneJs = document.getElementById("ohne-js");
+
+  var jahr = parseInt(skala.getAttribute("data-jahr"), 10);
+  var anteil = parseFloat(skala.getAttribute("data-anteil"));
+  var W = 600, H = 170, SPANNE = 10;
+  var start = jahr - SPANNE, ende = jahr + SPANNE;
+
+  function xFuer(j) { return ((j - start) / (ende - start)) * W; }
+
+  /* ---- Skala zeichnen: Jahresstriche, Halbjahresstriche, Beschriftung ---- */
+  var NS = "http://www.w3.org/2000/svg";
+  function el(name, attrs, text) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text) e.textContent = text;
+    return e;
+  }
+
+  for (var j = start; j <= ende; j += 0.25) {
+    var x = xFuer(j);
+    var ganz = Math.abs(j - Math.round(j)) < 0.001;
+    var halb = Math.abs(j * 2 - Math.round(j * 2)) < 0.001;
+    var beschriftet = ganz && (Math.round(j) % 5 === 0 || Math.round(j) === jahr);
+    var laenge = beschriftet ? 46 : ganz ? 30 : halb ? 20 : 12;
+    svg.appendChild(el("line", {
+      "class": "strich", x1: x, x2: x, y1: 0, y2: laenge,
+      "stroke-width": beschriftet ? 2 : 1.2,
+      "vector-effect": "non-scaling-stroke"
+    }));
+    if (beschriftet) {
+      svg.appendChild(el("text", { "class": "zahl", x: x, y: 70 }, String(Math.round(j))));
+    }
+  }
+  svg.appendChild(el("line", { "class": "strich", x1: 0, x2: W, y1: 1, y2: 1, "stroke-width": 1, "vector-effect": "non-scaling-stroke" }));
+
+  /* ---- Nadel: genau auf den Tag, einmal von links einfahren ---- */
+  var ziel = (xFuer(jahr + anteil) / W) * 100;
+  var weniger = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function setzeNadel(prozent) {
+    skala.style.setProperty("--nadel-x", prozent + "%");
+    nadelDatum.className = "nadel-datum" + (prozent > 62 ? " links" : "");
+  }
+
+  if (weniger) {
+    setzeNadel(ziel);
+  } else {
+    setzeNadel(0);
+    window.setTimeout(function () {
+      nadel.classList.add("faehrt");
+      setzeNadel(ziel);
+    }, 350);
+  }
+
+  /* ---- Player ---- */
+  audio.removeAttribute("controls");
+  ohneJs.hidden = true;
+  player.hidden = false;
+
+  function fmt(s) {
+    if (!isFinite(s)) return "–:––";
+    var m = Math.floor(s / 60), r = Math.floor(s % 60);
+    return m + ":" + (r < 10 ? "0" : "") + r;
+  }
+
+  function zeigeFortschritt() {
+    var d = audio.duration;
+    var p = isFinite(d) && d > 0 ? (audio.currentTime / d) * 100 : 0;
+    pos.value = Math.round(p * 10);
+    pos.style.setProperty("--fortschritt", p + "%");
+    jetzt.textContent = fmt(audio.currentTime);
+  }
+
+  audio.addEventListener("loadedmetadata", function () { gesamt.textContent = fmt(audio.duration); zeigeFortschritt(); });
+  audio.addEventListener("durationchange", function () { gesamt.textContent = fmt(audio.duration); });
+  audio.addEventListener("timeupdate", zeigeFortschritt);
+
+  function zustand(spielt) {
+    knopf.setAttribute("aria-pressed", spielt ? "true" : "false");
+    knopf.setAttribute("aria-label", spielt ? "Pause" : "Abspielen");
+    skala.classList.toggle("spielt", spielt);
+  }
+
+  audio.addEventListener("play", function () { zustand(true); });
+  audio.addEventListener("pause", function () { zustand(false); });
+  audio.addEventListener("ended", function () { zustand(false); audio.currentTime = 0; zeigeFortschritt(); });
+
+  knopf.addEventListener("click", function () {
+    if (audio.paused) {
+      var versprechen = audio.play();
+      if (versprechen && versprechen.catch) versprechen.catch(function () { zustand(false); });
+    } else {
+      audio.pause();
+    }
+  });
+
+  pos.addEventListener("input", function () {
+    if (isFinite(audio.duration)) audio.currentTime = (pos.value / 1000) * audio.duration;
+    pos.style.setProperty("--fortschritt", pos.value / 10 + "%");
+  });
+
+  if ("mediaSession" in navigator && window.MediaMetadata) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: "Radio Hubert",
+      artist: "Ein Geschenk von Dominic"
+    });
+  }
+})();
+</script>
+</body>
+</html>
