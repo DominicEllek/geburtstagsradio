@@ -330,7 +330,9 @@
     var x = xFuer(j);
     var ganz = Math.abs(j - Math.round(j)) < 0.001;
     var halb = Math.abs(j * 2 - Math.round(j * 2)) < 0.001;
-    var beschriftet = ganz && (Math.round(j) % 5 === 0 || Math.round(j) === jahr);
+    /* Fünferjahre direkt neben dem Geburtsjahr bleiben unbeschriftet, sonst überlappen die Zahlen. */
+    var abstand = Math.abs(Math.round(j) - jahr);
+    var beschriftet = ganz && (abstand === 0 || (Math.round(j) % 5 === 0 && abstand > 1));
     var laenge = beschriftet ? 46 : ganz ? 30 : halb ? 20 : 12;
     svg.appendChild(el("line", {
       "class": "strich", x1: x, x2: x, y1: 0, y2: laenge,
